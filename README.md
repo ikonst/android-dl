@@ -33,5 +33,5 @@ For your Java code:
 * Within your Java code, use <code>AndroidDl.loadLibrary</code> instead of <code>System.loadLibrary</code>.
 
 Within your native code:
-* <code>#include <android-dl.h></code>
+* <code>#include &lt;android-dl.h&gt;</code>
 * Use <code>android_dlopen</code> instead of <code>dlopen</code>.
