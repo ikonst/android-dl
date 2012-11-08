@@ -15,23 +15,23 @@ Usage
 
 Within your jni/Android.mk file, add:
 
-<pre>
+<code>
 $(call import-module,android-dl)
-</pre>
+</code>
 
 and in your module, add:
 
-<pre>
+<code>
 LOCAL_SHARED_LIBRARIES := ... android-dl ...
-</pre>
+</code>
 
 For more information about importing NDK modules, see docs/IMPORT-MODULE.html in the Android NDK tree.
 
 For your Java code:
 * Copy src/android_dl to your src directory.
-* From within your activity, call <pre>AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )</pre>.
-* Within your Java code, use <pre>AndroidDl.loadLibrary<pre> instead of <pre>System.loadLibrary</pre>.
+* From within your activity, call <code>AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )</code>.
+* Within your Java code, use <code>AndroidDl.loadLibrary</code> instead of <code>System.loadLibrary</code>.
 
 Within your native code:
-* #include <android-dl.h>
-* Use <pre>android_dlopen</pre> instead of <pre>dlopen</pre>.
+* <code>#include <android-dl.h></code>
+* Use <code>android_dlopen</code> instead of <code>dlopen</code>.
