@@ -7,20 +7,28 @@ package android_dl;
  * of being unable to automatically load library dependencies when naively
  * calling @{link System.loadLibrary}.
  */
-public class LibraryLoader {
+public class AndroidDl {
 
 	/**
 	 * Initializes the library loader.
+	 *
+	 * @param nativeLibraryDir the native library directory	 
 	 */
-	public static boolean initialize(String dataDir, String[] ldLibraryPath) {
+	public static boolean initialize(String nativeLibraryDir, String[] ldLibraryPath) {
 		System.loadLibrary("android-dl");
 		return setup(dataDir, ldLibraryPath);
 	}
 
 	/**
 	 * Initializes the library loader with the system's LD_LIBRARY_PATH.
+	 *
+	 * Call this method within your main activity and pass
+	 *  <code>this.getApplicationInfo().nativeLibraryDir</code> as your native
+	 *  library directory.
+	 *
+	 * @param nativeLibraryDir the native library directory
 	 */
-	public static boolean initialize(String dataDir) {
+	public static boolean initialize(String nativeLibraryDir) {
 		return initialize(dataDir, System.getenv("LD_LIBRARY_PATH").split(":"));
 	}
 

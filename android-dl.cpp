@@ -42,7 +42,7 @@
 
 #include <linux/elf.h>
 
-#include "android-dl.h"
+#include "inc/android-dl.h"
 #include "common.h"
 
 /* The library paths. */
