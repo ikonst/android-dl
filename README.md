@@ -8,7 +8,7 @@ For example, if your JNI library libfoo.so links with libgnustl_shared.so, you h
     System.loadLibrary("libstlport_shared");
     System.loadLibrary("foo");
 
-This is what the Android NDK recommends doing (see `docs/CPLUSPLUS-SUPPORT.html`) and foor merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
+This is what the Android NDK recommends doing (see `docs/CPLUSPLUS-SUPPORT.html`) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
 Technically, this stems from the fact that your app's *lib* directory (i.e. `/data/data/com.company.foobar/lib`) is not in the Dalvik process' `LD_LIBRARY_PATH` environment variable. Moreover, the environment variable is only parsed at startup and there's no way to amend the list at runtime.
 
