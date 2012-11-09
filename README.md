@@ -36,7 +36,7 @@ For example, if your directory layout is:
        foobar/ <- your project
        android-dl/
 
-you should append to your Android.mk:
+this is what you should append to your Android.mk:
 
     $(call import-add-path,..)
     $(call import-module,android-dl)
@@ -47,16 +47,15 @@ In addition, add `android-dl` to your `LOCAL_SHARED_LIBRARIES`, e.g.:
 
     LOCAL_MODULE := foo
     LOCAL_SRC_FILES := foo.c
-    LOCAL_C_INCLUDES :=
-    LOCAL_SHARED_LIBRARIES := android-dl
+    LOCAL_SHARED_LIBRARIES := bar baz android-dl
 
     include $(BUILD_SHARED_LIBRARY)
 
-For more information about importing NDK modules, see docs/IMPORT-MODULE.html in the Android NDK tree.
+For more information about importing NDK modules, see `docs/IMPORT-MODULE.html` in the Android NDK tree.
 
 For your Java code:
 
-* Copy `src/android_dl` to your `src` directory.
+* Copy *src/android-dl* to your *src* directory.
 * Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
 * Within your Java code, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
 
