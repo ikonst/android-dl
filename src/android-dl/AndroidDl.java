@@ -16,7 +16,7 @@ public class AndroidDl {
 	 */
 	public static boolean initialize(String nativeLibraryDir, String[] ldLibraryPath) {
 		System.loadLibrary("android-dl");
-		return setup(dataDir, ldLibraryPath);
+		return setup(nativeLibraryDir, ldLibraryPath);
 	}
 
 	/**
@@ -29,7 +29,7 @@ public class AndroidDl {
 	 * @param nativeLibraryDir the native library directory
 	 */
 	public static boolean initialize(String nativeLibraryDir) {
-		return initialize(dataDir, System.getenv("LD_LIBRARY_PATH").split(":"));
+		return initialize(nativeLibraryDir, System.getenv("LD_LIBRARY_PATH").split(":"));
 	}
 
 
