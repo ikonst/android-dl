@@ -10,26 +10,28 @@ For example, if your JNI library libfoo.so links with libgnustl_shared.so, you h
 
 This is what the Android NDK recommends doing (see `docs/CPLUSPLUS-SUPPORT.html`) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
-Technically, this stems from the fact that your app's *lib* directory (i.e. `/data/data/com.company.foobar/lib`) is not in the Dalvik process' `LD_LIBRARY_PATH` environment variable. Moreover, the environment variable is only parsed at startup and there's no way to amend the list at runtime.
+Technically, this stems from the fact that your app's *lib* directory (i.e. */data/data/com.company.foobar/lib*) is not in the Dalvik process' `LD_LIBRARY_PATH` environment variable. Moreover, the environment variable is only parsed at startup and there's no way to amend the list at runtime.
 
 History
 =======
 
-This code originally comes from the LibreOffice lo-bootstrap.c file;
-all of the irrelevant (LibreOffice-specific) code was removed and a different namespace was reinstated.
-In addition, exception reporting was added.
+This code originally comes from the LibreOffice lo-bootstrap.c file, with the following modifications:
+
+* Only the dynamic library-related code was kept.
+* A different namespace was reinstated.
+* Exception reporting was added.
+* Documentation.
 
 Usage
 =====
 
-Append this to the end of your `jni/Android.mk` file:
+If the *android-dl* directory is in a global location (pointed to by NDK_MODULE_PATH), this is what you should append to the end of your `jni/Android.mk` file:
 
 <pre>
 $(call import-module,android-dl)
 </pre>
 
-The android-dl directory should either be in a global path (pointed to by NDK_MODULE_PATH);
-alternatively, you might choose to place it relative to your project.
+Alternatively, you might choose to place it relative to your project.
 For example, if your directory layout is:
 
      workspace/
