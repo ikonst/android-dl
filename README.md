@@ -13,13 +13,14 @@ Even the Android NDK recommends doing that -- e.g. see docs/CPLUSPLUS-SUPPORT.ht
 Usage
 =====
 
-Within your jni/Android.mk file, add:
+Append this to the end of your <code>jni/Android.mk</code> file:
 
 <code>
 $(call import-module,android-dl)
 </code>
 
-and in your module, add:
+Also, change your module's LOCAL_SHARED_LIBRARIES to include <code>android-dl</code>,
+i.e.:
 
 <code>
 LOCAL_SHARED_LIBRARIES := ... android-dl ...
