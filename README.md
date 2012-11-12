@@ -3,16 +3,16 @@ Android Dynamic Library Loader
 
 This library works around Android's inability to resolve dependencies between your app's shared libraries (as opposed to dependency on system libraries such as *libc.so* and *liblog.so*).
 For example, if you load a JNI shared library that depends on another library shipped in your app's *lib/* directory, you'll get a `LinkageError` exception unless you manually preload the dependencies (by performing additional `System.loadLibrary` calls), 
-For example, if your JNI library libfoo.so links with libgnustl_shared.so, you have to explicitly perform:
+For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, you have to explicitly perform:
 
     System.loadLibrary("libstlport_shared");
     System.loadLibrary("foo");
 	
-This is what the Android NDK recommends doing (see `docs/CPLUSPLUS-SUPPORT.html`) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
+This is what the Android NDK recommends doing (see *docs/CPLUSPLUS-SUPPORT.html*) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
 (Same goes for performing `dlopen` from within native code.)
 
-Technically, this stems from the fact that your app's *lib/* directory (i.e. */data/data/com.company.foobar/lib/*) is not in the Dalvik process' `LD_LIBRARY_PATH` environment variable. Moreover, the environment variable is only parsed at startup and there's no way to amend the list at runtime.
+Technically, this stems from the fact that your app's *lib/* directory (i.e. */data/data/com.company.foobar/lib/*) is not in the Dalvik process' *LD_LIBRARY_PATH* environment variable. Moreover, the environment variable is [only parsed at startup](https://groups.google.com/d/msg/android-ndk/m6OddFQINxs/sAQ34sFhJ7QJ) and there's no way to amend the list at runtime.
 
 History
 =======
@@ -63,7 +63,7 @@ For more information about importing NDK modules, see `docs/IMPORT-MODULE.html` 
 
 ## Step 2: Add Java bindings and initialize
 
-1. Copy *src/android-dl* to your *src* directory.
+1. Copy *src/android-dl* to your *src/* directory.
 1. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
 1. To load a JNI library, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
 
