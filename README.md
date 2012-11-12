@@ -8,7 +8,7 @@ For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, y
     System.loadLibrary("libstlport_shared");
     System.loadLibrary("foo");
 	
-This is what the Android NDK recommends doing (see *docs/CPLUSPLUS-SUPPORT.html*) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
+This is what the Android NDK recommends doing (see docs/CPLUSPLUS-SUPPORT.html) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
 (Same goes for performing `dlopen` from within native code.)
 
@@ -17,7 +17,7 @@ Technically, this stems from the fact that your app's *lib/* directory (i.e. */d
 History
 =======
 
-This code originally comes from the LibreOffice lo-bootstrap.c file, with the following modifications:
+This code originally comes from the LibreOffice *lo-bootstrap.c* file, with the following modifications:
 
 * Only the dynamic library-related code was kept.
 * A different namespace was reinstated.
@@ -59,15 +59,18 @@ In addition, add `android-dl` to your `LOCAL_SHARED_LIBRARIES`, e.g.:
 
     include $(BUILD_SHARED_LIBRARY)
 
-For more information about importing NDK modules, see `docs/IMPORT-MODULE.html` in the Android NDK tree.
+For more information about importing NDK modules, see docs/IMPORT-MODULE.html in the Android NDK tree.
 
 ## Step 2: Add Java bindings and initialize
 
 1. Copy *src/android-dl* to your *src/* directory.
 1. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
-1. To load a JNI library, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
 
-## Step 3: Use from your native code
+## Step 3: Use from your Java code
+
+To load a JNI library, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
+
+## Step 4: Use from your native code
 
 When you wish to load shared libraries from within your native code:
 
