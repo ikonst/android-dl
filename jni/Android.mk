@@ -2,6 +2,11 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# platform-12 defines Dl_info in <dlfcn.h>
+ifeq (,$(call gte,$(APP_PLATFORM_LEVEL),12))
+$(error Platform must be 12 or higher)
+endif
+
 LOCAL_MODULE := android-dl
 LOCAL_SRC_FILES := \
 	android-dl.cpp \
