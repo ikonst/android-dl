@@ -76,3 +76,12 @@ When you wish to load shared libraries from within your native code:
 
 1. `#include <android-dl.h>`
 1. Use `android_dlopen(lib)` instead of `dlopen(lib)`.
+
+Testing
+=======
+
+To test the JNI interface, import both the android-dl and the android-dl-test projects into ADT.
+Run 'android-dl-test' to invoke the JUnit testcases.
+
+To test the native interface (through GoogleTest), go to 'test' subdirectory and execute
+`test.sh` (or `test.cmd` on Windows).
