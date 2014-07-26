@@ -1,12 +1,13 @@
 #include <jni.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "android-dl.h"
 #include "common.h"
 
-extern const char **library_locations; // defined in android-dl.cpp
+extern char *library_locations; // defined in android-dl.cpp
 
-#define METHOD_NAME(class, method) Java_android_1dl_##class##_##method
+#define METHOD_NAME(class, method) Java_com_github_ikonst_android_1dl_##class##_##method
 
 jclass
 	g_cls_String,
@@ -67,6 +68,17 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, __attribute__((unused)) void *reserved)
 	env->DeleteGlobalRef(g_cls_UnsatisfiedLinkError);
 }
 
+void log_library_locations()
+{
+    int i = 0;
+
+    // iterate double-NUL terminated string
+    for (const char *ll = library_locations; *ll != '\0'; ll += strlen(ll) + 1) {
+        LOGI("library_locations[%d] = %s", i, ll);
+        ++i;
+    }
+}
+
 /*
  * Class:     android_dl.AndroidDl
  * Method:    setup
@@ -77,44 +89,73 @@ JNIEXPORT
 jboolean JNICALL METHOD_NAME(AndroidDl, setup)
   (JNIEnv *env, jclass, jstring nativeLibraryDir, jobjectArray ld_library_path)
 {
-	if ((nativeLibraryDir == NULL) || (ld_library_path == NULL))
-	{
-		env->ThrowNew(g_cls_IllegalArgumentException, "Invalid arguments.");
-		return JNI_FALSE;
-	}
+    if ((nativeLibraryDir == NULL) || (ld_library_path == NULL))
+    {
+        env->ThrowNew(g_cls_IllegalArgumentException, "Invalid arguments.");
+        return JNI_FALSE;
+    }
 
-	int paths_num = env->GetArrayLength(ld_library_path);
-	
-	library_locations = (const char**)malloc((paths_num+2) * sizeof(char *));	
-	if (library_locations == NULL)
-	{
-		env->ThrowNew(g_cls_RuntimeException, "Cannot allocate library locations.");
-		return JNI_FALSE;
-	}
+    jsize paths_num = env->GetArrayLength(ld_library_path);
 
-	const char *nativeLibraryDirPath = env->GetStringUTFChars(nativeLibraryDir, NULL);
-	if (nativeLibraryDirPath == NULL)
-	{
-		env->ThrowNew(g_cls_RuntimeException, "Cannot get data directory path.");
-		return JNI_FALSE;
-	}
-	library_locations[0] = strdup(nativeLibraryDirPath);
-	env->ReleaseStringUTFChars(nativeLibraryDir, nativeLibraryDirPath);
+    //
+    // Calculate the size of the double-NUL terminated string
+    //
 
-	for (int i = 0; i < paths_num; i++)
-	{
-		jstring item = (jstring)env->GetObjectArrayElement(ld_library_path, i);
-		const char *s = env->GetStringUTFChars(item, NULL);
-		library_locations[i+1] = strdup(s);
-		env->ReleaseStringUTFChars(item, s);
-	}
+    jsize size = 1; // final NUL for double-NUL termination
 
-	library_locations[paths_num+1] = NULL;
+    size += env->GetStringUTFLength(nativeLibraryDir) + 1;
 
-	for (int j = 0; library_locations[j] != NULL; j++)
-		LOGI("library_locations[%d] = %s", j, library_locations[j]);
+    for (jsize i = 0; i < paths_num; ++i) {
+        jstring elem = (jstring)env->GetObjectArrayElement(ld_library_path, i);
+        size += env->GetStringUTFLength(elem) + 1;
+    }
 
-	return JNI_TRUE;
+    //
+    // Try to allocate
+    //
+
+    library_locations = (char*)malloc(size);
+    if (library_locations == NULL) {
+        env->ThrowNew(g_cls_RuntimeException, "Cannot allocate library locations.");
+        return JNI_FALSE;
+    }
+
+
+    //
+    // Copy into library_locations
+    //
+
+    char *ll = library_locations;
+    int ret;
+
+    // dataDir
+    const char *nativeLibraryDirPath = env->GetStringUTFChars(nativeLibraryDir, NULL);
+    if (nativeLibraryDirPath == NULL)
+    {
+        env->ThrowNew(g_cls_RuntimeException, "Cannot get data directory path.");
+        return JNI_FALSE;
+    }
+    ret = sprintf(ll, "%s", nativeLibraryDirPath);
+    env->ReleaseStringUTFChars(nativeLibraryDir, nativeLibraryDirPath);
+    if (ret < 0) return JNI_FALSE;
+    ll += ret + 1;
+
+    // ld_library_path
+    for (jsize i = 0; i < paths_num; ++i) {
+        jstring elem = (jstring)env->GetObjectArrayElement(ld_library_path, i);
+        const char *s = env->GetStringUTFChars(elem, NULL);
+        ret = sprintf(ll, "%s", s);
+        env->ReleaseStringUTFChars(elem, s);
+        if (ret < 0) return JNI_FALSE;
+        ll += ret + 1;
+    }
+
+    // add final NUL (for double-NUL termination)
+    *ll = '\0';
+
+    log_library_locations();
+
+    return JNI_TRUE;
 }
 
 /*

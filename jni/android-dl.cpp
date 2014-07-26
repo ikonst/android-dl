@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -45,8 +46,20 @@
 #include "inc/android-dl.h"
 #include "common.h"
 
-/* The library paths. */
-const char **library_locations;
+/* Taken from bionic/linker/liner.cpp */
+static const char* const kDefaultLdPaths[] = {
+#if defined(__LP64__)
+  "/vendor/lib64",
+  "/system/lib64",
+#else
+  "/vendor/lib",
+  "/system/lib",
+#endif
+  NULL
+};
+
+/* The library paths as a double-null terminated string */
+char *library_locations;
 
 static char last_error[1024] = {0};
 
@@ -54,13 +67,13 @@ extern "C" {
 
 void set_error(const char* format, ...)
 {
-	va_list args;
-	va_start(args, format);
+    va_list args;
+    va_start(args, format);
 
-	vsnprintf(last_error, sizeof(last_error), format, args);
-	__android_log_write(ANDROID_LOG_ERROR, LOG_TAG, last_error);
+    vsnprintf(last_error, sizeof(last_error), format, args);
+    __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, last_error);
 
-	va_end(args);
+    va_end(args);
 }
 
 #define SET_ERROR(format, ...) set_error("%s: " format, __FUNCTION__, ##__VA_ARGS__)
@@ -102,12 +115,12 @@ android_dlneeds(const char *library)
     fd = open(library, O_RDONLY);
 
     if (fd == -1) {
-    	SET_ERROR("Could not open library %s: %s", library, strerror(errno));
+        SET_ERROR("Could not open library %s: %s", library, strerror(errno));
         return NULL;
     }
 
     if (read(fd, &hdr, sizeof(hdr)) < (int) sizeof(hdr)) {
-    	set_error("Could not read ELF header of %s", library);
+        SET_ERROR("Could not read ELF header of %s", library);
         close(fd);
         return NULL;
     }
@@ -115,12 +128,12 @@ android_dlneeds(const char *library)
     /* Read in .shstrtab */
 
     if (lseek(fd, hdr.e_shoff + hdr.e_shstrndx * sizeof(shdr), SEEK_SET) < 0) {
-    	set_error("Could not seek to .shstrtab section header of %s", library);
+        SET_ERROR("Could not seek to .shstrtab section header of %s", library);
         close(fd);
         return NULL;
     }
     if (read(fd, &shdr, sizeof(shdr)) < (int) sizeof(shdr)) {
-    	set_error("Could not read section header of %s", library);
+        SET_ERROR("Could not read section header of %s", library);
         close(fd);
         return NULL;
     }
@@ -132,13 +145,13 @@ android_dlneeds(const char *library)
     /* Read section headers, looking for .dynstr section */
 
     if (lseek(fd, hdr.e_shoff, SEEK_SET) < 0) {
-    	set_error("Could not seek to section headers of %s", library);
+        SET_ERROR("Could not seek to section headers of %s", library);
         close(fd);
         return NULL;
     }
     for (i = 0; i < hdr.e_shnum; i++) {
         if (read(fd, &shdr, sizeof(shdr)) < (int) sizeof(shdr)) {
-        	set_error("Could not read section header of %s", library);
+            SET_ERROR("Could not read section header of %s", library);
             close(fd);
             return NULL;
         }
@@ -154,7 +167,7 @@ android_dlneeds(const char *library)
     }
 
     if (i == hdr.e_shnum) {
-    	set_error("No .dynstr section in %s", library);
+        SET_ERROR("No .dynstr section in %s", library);
         close(fd);
         return NULL;
     }
@@ -162,7 +175,7 @@ android_dlneeds(const char *library)
     /* Read section headers, looking for .dynamic section */
 
     if (lseek(fd, hdr.e_shoff, SEEK_SET) < 0) {
-    	SET_ERROR("Could not seek to section headers of %s", library);
+        SET_ERROR("Could not seek to section headers of %s", library);
         close(fd);
         return NULL;
     }
@@ -231,6 +244,83 @@ android_dlneeds(const char *library)
     return NULL;
 }
 
+bool
+init_library_locations_from_env()
+{
+    assert(library_locations == NULL);
+
+    // This function splits LD_LIBRARY_PATH into strings
+    // using the ';' token separator, similar to strtok.
+    // (To denote the end, a double NUL is used.)
+    //
+    // For example:
+    //  LD_LIBRARY_PATH   = "foo;bar;baz"
+    //  library_locations = "foo\0bar\0baz\0\0"
+    //
+    
+    const char *llp = getenv("LD_LIBRARY_PATH");
+    library_locations = (char*)malloc(strlen(llp) + 2);
+    if (library_locations == NULL)
+        return false;
+
+    // tokenize by ';'
+    char *ll = library_locations;
+    for (const char *c = llp; *c != '\0'; ++c) {
+        *ll = (*c == ';') ? '\0' : *c;
+        ++ll;
+    }
+    
+    // add final token's NUL
+    *ll = '\0';
+    ++ll;
+
+    // add terminating NUL
+    *ll = '\0';
+
+    return true;
+}
+
+bool
+library_exists(const char *path)
+{
+    struct stat st;
+
+    return
+        stat(path, &st) == 0 &&
+        S_ISREG(st.st_mode);
+}
+
+char *
+get_library_full_path(const char *library)
+{
+    for (const char *dir = library_locations; *dir != '\0'; dir += strlen(dir) + 1) {
+        char *full_path;
+        
+        if (asprintf(&full_path, "%s/%s", dir, library) == -1)
+            continue; // should not normally happen
+
+        if (library_exists(full_path))
+            return full_path;
+
+        free(full_path);
+    }
+    
+    // Fall back to the built-in well known paths (like bionic's linker)
+    for (const char* const* syspath = kDefaultLdPaths; *syspath != NULL; ++syspath) {
+        char *full_path;
+
+        if (asprintf(&full_path, "%s/%s", *syspath, library) == -1)
+            continue; // should not normally happen
+
+        if (library_exists(full_path))
+            return full_path;
+
+        free(full_path);
+    }
+    
+    return NULL;
+}
+
 __attribute__ ((visibility("default")))
 void *
 android_dlopen(const char *library)
@@ -258,12 +348,9 @@ android_dlopen(const char *library)
     struct loadedLib *rover;
     struct loadedLib *new_loaded_lib;
 
-    struct stat st;
     void *p;
-    char *full_name;
     char **needed;
     int i;
-    int found;
 
     struct timeval tv0, tv1, tvdiff;
 
@@ -274,48 +361,40 @@ android_dlopen(const char *library)
 
     if (rover != NULL)
         return rover->handle;
+    
+    if (library_locations == NULL) {
+        /* setup wasn't called; initialize from LD_LIBRARY_PATH to mimic dlopen */
+        init_library_locations_from_env();
+    }
 
     /* LOGI("android_dlopen(%s)", library); */
 
-    found = 0;
+    const char *full_name = NULL;
+    char *full_name_heap = NULL;
+    
     if (library[0] == '/') {
-        full_name = strdup(library);
-
-        if (stat(full_name, &st) == 0 &&
-            S_ISREG(st.st_mode))
-            found = 1;
-        else
-            free(full_name);
+        if (library_exists(library))
+            full_name = library;
     } else {
-        for (i = 0; !found && library_locations[i] != NULL; i++) {
-            full_name = (char*)malloc(strlen(library_locations[i]) + 1 + strlen(library) + 1);
-            strcpy(full_name, library_locations[i]);
-            strcat(full_name, "/");
-            strcat(full_name, library);
-
-            if (stat(full_name, &st) == 0 &&
-                S_ISREG(st.st_mode))
-                found = 1;
-            else
-                free(full_name);
-        }
+        full_name_heap = get_library_full_path(library);
+        full_name = full_name_heap;
     }
 
-    if (!found) {
+    if (full_name == NULL) {
         SET_ERROR("Library %s not found", library);
         return NULL;
     }
 
     needed = android_dlneeds(full_name);
     if (needed == NULL) {
-        free(full_name);
+        free(full_name_heap);
         return NULL;
     }
 
     for (i = 0; needed[i] != NULL; i++) {
         if (android_dlopen(needed[i]) == NULL) {
             free_ptrarray((void **) needed);
-            free(full_name);
+            free(full_name_heap);
             return NULL;
         }
     }
@@ -328,9 +407,9 @@ android_dlopen(const char *library)
     LOGI("dlopen(%s) = %p, %ld.%03lds",
          full_name, p,
          (long) tvdiff.tv_sec, (long) tvdiff.tv_usec / 1000);
-    free(full_name);
     if (p == NULL)
         SET_ERROR("Error from dlopen(%s): %s", full_name, dlerror());
+    free(full_name_heap);
 
     new_loaded_lib = (struct loadedLib*)malloc(sizeof(*new_loaded_lib));
     new_loaded_lib->name = strdup(library);
@@ -424,7 +503,7 @@ __attribute__ ((visibility("default")))
 const char *
 android_dl_get_last_error()
 {
-	return last_error;
+    return last_error;
 }
 
 } // extern "C"

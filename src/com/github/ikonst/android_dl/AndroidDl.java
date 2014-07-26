@@ -1,4 +1,4 @@
-package android_dl;
+package com.github.ikonst.android_dl;
 
 /**
  * Fixes Android by allowing loading of libraries and their dependencies.
@@ -12,7 +12,7 @@ public class AndroidDl {
 	/**
 	 * Initializes the library loader.
 	 *
-	 * @param nativeLibraryDir the native library directory	 
+	 * @param nativeLibraryDir the native library directory
 	 */
 	public static boolean initialize(String nativeLibraryDir, String[] ldLibraryPath) {
 		System.loadLibrary("android-dl");
@@ -53,8 +53,11 @@ public class AndroidDl {
 
 	/**
 	 * Gets the names of libraries required by a given library (i.e. the contents of the ELF DT_NEEDED section).
+	 *
+	 * @param libraryPath the path to the library file (unlike {@link dlopen}, this function does not search the
+	 *   library paths)
 	 */
-	public static native String[] dlneeds(String library);
+	public static native String[] dlneeds(String libraryPath);
 
 	/**
 	 * Opens a dynamic library.

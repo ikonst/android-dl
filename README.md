@@ -7,7 +7,7 @@ For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, y
 
     System.loadLibrary("gnustl_shared");
     System.loadLibrary("foo");
-	
+
 This is what the Android NDK recommends doing (see docs/CPLUSPLUS-SUPPORT.html) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
 (Same goes for performing `dlopen` from within native code.)
@@ -32,7 +32,7 @@ Usage
 If the *android-dl* directory is in a global location (pointed to by the *NDK_MODULE_PATH* environment variable), this is what you should append to the end of your *jni/Android.mk* file:
 
 <pre>
-$(call import-module,android-dl)
+$(call import-module,android-dl/jni)
 </pre>
 
 Alternatively, you might choose to place it relative to your project.
@@ -41,13 +41,13 @@ For example, if your directory layout is:
      workspace/
        android-dl/
        foobar/ <- your project
-	     jni/
-	       Android.mk
+         jni/
+           Android.mk
 
 this is what you should append to your *jni/Android.mk* file:
 
     $(call import-add-path,..)
-    $(call import-module,android-dl)
+    $(call import-module,android-dl/jni)
 
 In addition, add `android-dl` to your `LOCAL_SHARED_LIBRARIES`, e.g.:
 

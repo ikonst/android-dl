@@ -16,7 +16,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
 LOCAL_CFLAGS += -W -Wall -fno-rtti -fno-exceptions
 # GoogleTest requires a fully-functional C++ library
 # Otherwise, we only use C++ as a "better C"
-ifneq ($(ANDROID_DL_TEST),1)
+ifeq ($(APP_STL),none)
 LOCAL_CFLAGS += -nodefaultlibs 
 endif
 LOCAL_LDLIBS := -llog
@@ -25,7 +25,3 @@ LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/inc
 LOCAL_SHARED_LIBRARIES := dl log
 
 include $(BUILD_SHARED_LIBRARY)
-
-ifeq ($(ANDROID_DL_TEST),1)
-include test/Android.mk
-endif
