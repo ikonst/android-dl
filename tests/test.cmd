@@ -7,7 +7,7 @@ if not "%ANDROID_SDK_ROOT%"=="" PATH=%ANDROID_SDK_ROOT%\platform-tools;%PATH%
 set DESTDIR=/data/local/tmp
 
 REM build
-ndk-build NATIVE_TEST=1
+call ndk-build NATIVE_TEST=1
 
 REM deploy
 for %%f in (libs\armeabi\*.so) do adb push %%f %DESTDIR%/
