@@ -65,5 +65,6 @@ TEST(AndroidDlTest, OpenTest)
     EXPECT_STREQ(info.dli_sname, "testfunc");
     EXPECT_EQ(info.dli_saddr, testfunc);
     
+    // NOTE: currently android_dlclose does nothing
     EXPECT_EQ(0, android_dlclose(lib));
 }
