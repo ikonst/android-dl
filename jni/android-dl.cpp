@@ -245,42 +245,6 @@ android_dlneeds(const char *library)
 }
 
 bool
-init_library_locations_from_env()
-{
-    assert(library_locations == NULL);
-
-    // This function splits LD_LIBRARY_PATH into strings
-    // using the ';' token separator, similar to strtok.
-    // (To denote the end, a double NUL is used.)
-    //
-    // For example:
-    //  LD_LIBRARY_PATH   = "foo;bar;baz"
-    //  library_locations = "foo\0bar\0baz\0\0"
-    //
-    
-    const char *llp = getenv("LD_LIBRARY_PATH");
-    library_locations = (char*)malloc(strlen(llp) + 2);
-    if (library_locations == NULL)
-        return false;
-
-    // tokenize by ';'
-    char *ll = library_locations;
-    for (const char *c = llp; *c != '\0'; ++c) {
-        *ll = (*c == ';') ? '\0' : *c;
-        ++ll;
-    }
-    
-    // add final token's NUL
-    *ll = '\0';
-    ++ll;
-
-    // add terminating NUL
-    *ll = '\0';
-
-    return true;
-}
-
-bool
 library_exists(const char *path)
 {
     struct stat st;
@@ -318,6 +282,46 @@ get_library_full_path(const char *library)
         free(full_path);
     }
     
+    return NULL;
+}
+
+char *
+get_library_full_path_env(const char *library)
+{
+    const char *llp = getenv("LD_LIBRARY_PATH");
+    while (llp != NULL && *llp != '\0') {
+        char *full_path;
+
+        // find path separator (or NUL)
+        char *sep = strchr(llp, ':');
+        int len = (sep != NULL) ? sep - llp: -1;
+
+        if (asprintf(&full_path, "%.*s/%s", len, llp, library) == -1)
+            continue; // should not normally happen
+
+        if (library_exists(full_path))
+            return full_path;
+
+        free(full_path);
+
+        // advance to next path segment
+        if (sep == NULL) break;
+        llp = sep + 1;
+    }
+
+    // Fall back to the built-in well known paths (like bionic's linker)
+    for (const char* const* syspath = kDefaultLdPaths; *syspath != NULL; ++syspath) {
+        char *full_path;
+
+        if (asprintf(&full_path, "%s/%s", *syspath, library) == -1)
+            continue; // should not normally happen
+
+        if (library_exists(full_path))
+            return full_path;
+
+        free(full_path);
+    }
+
     return NULL;
 }
 
@@ -362,11 +366,6 @@ android_dlopen(const char *library)
     if (rover != NULL)
         return rover->handle;
     
-    if (library_locations == NULL) {
-        /* setup wasn't called; initialize from LD_LIBRARY_PATH to mimic dlopen */
-        init_library_locations_from_env();
-    }
-
     /* LOGI("%s(%s)", __FUNCTION__, library); */
 
     const char *full_name = NULL;
@@ -375,8 +374,11 @@ android_dlopen(const char *library)
     if (library[0] == '/') {
         if (library_exists(library))
             full_name = library;
-    } else {
+    } else if (library_locations != NULL) {
         full_name_heap = get_library_full_path(library);
+        full_name = full_name_heap;
+    } else { // search in LD_LIBRARY_PATH and kDefaultLdPaths
+        full_name_heap = get_library_full_path_env(library);
         full_name = full_name_heap;
     }
 
