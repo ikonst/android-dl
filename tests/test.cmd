@@ -15,6 +15,7 @@ adb push libs\armeabi\android-dl_test %DESTDIR%/
 adb shell chmod 775 %DESTDIR%/android-dl_test
 
 REM test
-adb shell "LD_LIBRARY_PATH=%DESTDIR% %DESTDIR%/android-dl_test"
+REM (throw in a few non-existent library paths for good measure)
+adb shell LD_LIBRARY_PATH=/foo:/bar:%DESTDIR% %DESTDIR%/android-dl_test
 
 endlocal
