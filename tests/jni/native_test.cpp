@@ -26,12 +26,14 @@ TEST(AndroidDlTest, NeedsTest)
         printf("\tNEEDS %s\n", *n);
 #endif
 
-    EXPECT_STREQ("liblog.so", needs[0]);
-    EXPECT_STREQ("libstdc++.so", needs[1]);
-    EXPECT_STREQ("libm.so", needs[2]);
-    EXPECT_STREQ("libc.so", needs[3]);
-    EXPECT_STREQ("libdl.so", needs[4]);
-    EXPECT_TRUE(needs[5] == NULL);
+    int i = -1;
+    EXPECT_STREQ("libc++_shared.so", needs[++i]);
+    EXPECT_STREQ("liblog.so", needs[++i]);
+    EXPECT_STREQ("libc.so", needs[++i]);
+    EXPECT_STREQ("libm.so", needs[++i]);
+    EXPECT_STREQ("libstdc++.so", needs[++i]);
+    EXPECT_STREQ("libdl.so", needs[++i]);
+    EXPECT_TRUE(needs[++i] == NULL);
 }
 
 TEST(AndroidDlTest, OpenTest)
