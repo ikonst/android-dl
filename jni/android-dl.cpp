@@ -76,7 +76,7 @@ void set_error(const char* format, ...)
     va_end(args);
 }
 
-#define SET_ERROR(format, ...) set_error("%s: " format, __func__, ##__VA_ARGS__)
+#define SET_ERROR(format, ...) set_error("%s: " format, __FUNCTION__, ##__VA_ARGS__)
 
 static char *
 read_section(int fd,
@@ -367,7 +367,7 @@ android_dlopen(const char *library)
         init_library_locations_from_env();
     }
 
-    /* LOGI("%s(%s)", __func__, library); */
+    /* LOGI("%s(%s)", __FUNCTION__, library); */
 
     const char *full_name = NULL;
     char *full_name_heap = NULL;
@@ -428,7 +428,7 @@ android_dlsym(void *handle,
 {
     void *p = dlsym(handle, symbol);
     if (p == NULL)
-        set_error("%s(%p,%s): %s", __func__, handle, symbol, dlerror());
+        set_error("%s(%p,%s): %s", __FUNCTION__, handle, symbol, dlerror());
     return p;
 }
 
@@ -494,7 +494,7 @@ android_dlclose(void *handle)
      * object drops to zero, we wouldn't know when to remove it from
      * our list, so we can't call dlclose().
      */
-    LOGI("%s(%p)", __func__, handle);
+    LOGI("%s(%p)", __FUNCTION__, handle);
 
     return 0;
 }
