@@ -47,7 +47,7 @@ Usage from native code (optional)
 
 If you wish to use *android-dl* from your native code (as a `dlopen` replacement), you need to import it into your `jni/Android.mk` and add it as your shared library dependency.
 
-Note that until you invoke `AndroidDl.initialize` from your Java code, your *LD_LIBRARY_PATH* will be used for library search.
+Note that until you invoke `AndroidDl.initialize` from your Java code, your *LD_LIBRARY_PATH* will be used for library search. In other words, if you use this library without calling `AndroidDl.initialize`, you might as well use `dlopen` directly.
 
 ## Step 1: Import the NDK module
 
