@@ -36,6 +36,21 @@ TEST(AndroidDlTest, NeedsTest)
     EXPECT_TRUE(needs[++i] == NULL);
 }
 
+TEST(AndroidDlTest, OpenAbsolutePath)
+{
+    void * lib = android_dlopen("/system/lib/libxml.so");
+    ASSERT_TRUE(lib != NULL);
+}
+
+TEST(AndroidDlTest, OpenSystemLib)
+{
+	// At this point, AndroidDl.initialize was not yet called,
+	// so we should be basically emulating dlopen
+
+    void * lib = android_dlopen("libz.so");
+    ASSERT_TRUE(lib != NULL);
+}
+
 TEST(AndroidDlTest, OpenTest)
 {
     void * lib = android_dlopen("libandroid-dl_testlib.so");
